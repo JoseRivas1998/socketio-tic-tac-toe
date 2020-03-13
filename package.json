@@ -1,0 +1,24 @@
+{
+  "name": "socketio-tic-tac-toe",
+  "version": "1.0.0",
+  "description": "Building Tic Tac Toe Game using NodeJS and Socket IO",
+  "main": "index.js",
+  "scripts": {
+    "server": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JoseRivas1998/socketio-tic-tac-toe.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/JoseRivas1998/socketio-tic-tac-toe/issues"
+  },
+  "homepage": "https://github.com/JoseRivas1998/socketio-tic-tac-toe#readme",
+  "dependencies": {
+    "socket.io": "^2.3.0",
+    "socket.io-client": "^2.3.0"
+  }
+}
