@@ -26,12 +26,8 @@ io.on('connection', (socket) => {
     } while (users[socket.uid]);
     console.log(`New user connected with uid ${socket.uid}`);
     socket.emit('rec_uid', socket.uid);
-    socket.on('send_username', data => {
-        users[socket.uid] = {
-            uname: data,
-            socket: socket
-        };
 
+    const assignGame = () => {
         const waitingGames = Object.keys(games).filter((gid) => {
             return games[gid].isWaitingForOpponent();
         });
@@ -61,6 +57,76 @@ io.on('connection', (socket) => {
             games[gid] = newGame;
             socket.emit('wait_for_opponent');
         }
+    }
 
+    socket.on('send_username', data => {
+        users[socket.uid] = {
+            uname: data,
+            socket: socket
+        };
+        assignGame();
+    });
+    socket.on('player_ready', data => {
+        console.log(`${data.gid}: player with uid ${socket.uid} is ready.`);
+        const game = games[data.gid];
+        game.playerReadyUp(socket.uid);
+        if(game.isPlaying()) {
+            const player0 = users[game.player0UID];
+            const player1 = users[game.player1UID];
+            const turn = game.currentPlayer;
+            player0.socket.emit('turn_start', {isTurn: game.player0UID === turn, board: [...game.board]});
+            player1.socket.emit('turn_start', {isTurn: game.player1UID === turn, board: [...game.board]});
+        } else {
+            console.log(`${data.gid}: Waiting for other player`);
+        }
+    });
+    socket.on('snd_move', data => {
+        console.log('Recieved move', data);
+        const uid = data.uid;
+        const gid = data.gid;
+        const cell = data.cell;
+        const game = games[gid];
+        const turn = game.currentPlayer;
+        if(turn === uid) {
+            if(game.makeMove(cell)) {
+                const player0 = users[game.player0UID];
+                const player1 = users[game.player1UID];
+                const turn = game.currentPlayer;
+                if(game.isWon()) {
+                    if(game.winner === game.player0UID) {
+                        player0.socket.emit('game_win', {board: [...game.board]});
+                        player1.socket.emit('game_lose', {board: [...game.board]});
+                    } else {
+                        player1.socket.emit('game_win', {board: [...game.board]});
+                        player0.socket.emit('game_lose', {board: [...game.board]});
+                    }
+                    delete games[gid];
+                } else if(game.isDraw()) {
+                    player0.socket.emit('game_draw', {board: [...game.board]});
+                    player1.socket.emit('game_draw', {board: [...game.board]});
+                    delete games[gid];
+                } else {
+                    player0.socket.emit('turn_start', {isTurn: game.player0UID === turn, board: [...game.board]});
+                    player1.socket.emit('turn_start', {isTurn: game.player1UID === turn, board: [...game.board]});
+                }
+            } else {
+                socket.emit('rej_move', {
+                    isTurn: turn === uid,
+                    msg: "That cell is already taken"
+                });
+            }
+        } else {
+            socket.emit('rej_move', {
+                isTurn: turn === uid,
+                msg: "It is not currently your turn"
+            });
+        }
+    });
+    socket.on('play_again', () => {
+        assignGame();
+    });
+    socket.on('disconnect', () => {
+        console.log(`Deleting user ${socket.uid}`);
+        delete users[socket.uid];
     });
 });
