@@ -1,0 +1,13 @@
+export const REC_UID = 'rec_uid';
+export const SEND_USERNAME = 'send_username';
+export const WAIT_FOR_OPPONENT = 'wait_for_opponent';
+export const OPPONENT_FOUND = 'opponent_found';
+export const PLAYER_READY = 'player_ready';
+export const TURN_START = 'turn_start';
+export const SND_MOVE = 'snd_move';
+export const REJ_MOVE = 'rej_move';
+export const GAME_WIN = 'game_win';
+export const GAME_DRAW = 'game_draw';
+export const GAME_LOSE = 'game_lose';
+export const PLAY_AGAIN = 'play_again';
+export const OPPONENT_DISCONNECTED = 'opponent_disconnected';

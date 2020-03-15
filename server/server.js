@@ -86,6 +86,13 @@ io.on('connection', (socket) => {
         const gid = data.gid;
         const cell = data.cell;
         const game = games[gid];
+        if(!game || !game.isPlaying()) {
+            socket.emit('rej_move', {
+                isTurn: false,
+                msg: "Game is not being played."
+            });
+            return;
+        }
         const turn = game.currentPlayer;
         if(turn === uid) {
             if(game.makeMove(cell)) {
@@ -127,6 +134,22 @@ io.on('connection', (socket) => {
     });
     socket.on('disconnect', () => {
         console.log(`Deleting user ${socket.uid}`);
+        const gamesWithUser = Object.keys(games).filter(gid => {
+            const game = games[gid];
+            return game.player0UID === socket.uid || game.player1UID === socket.uid;
+        });
+        for (let i = 0; i < gamesWithUser.length; i++) {
+            const gid = gamesWithUser[i];
+            const game = games[gid];
+            if (game.isWaitingForOpponent()) {
+                console.log(`\tUser was waiting for opponent in game ${gid}, deleting game.`);
+            } else {
+                const otherPlayer = game.player0UID === socket.uid ? game.player1UID : game.player0UID;
+                console.log(`\tUser was playing a game with ${otherPlayer}, deleting game and informing other player.`);
+                users[otherPlayer].socket.emit('opponent_disconnected');
+            }
+            delete games[gid];
+        }
         delete users[socket.uid];
     });
 });
